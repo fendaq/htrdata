@@ -15,7 +15,7 @@ outDir = 'nw_im_crop'
 allFiles = glob(join(imgAlignDir, '*.jpg'))
 os.makedirs(outDir, exist_ok=True)
 
-uznFile = join(uznDir, 'nw_numbers-'+str(pagenumber)+'.uzn')
+uznFile = join(uznDir, 'page'+str(pagenumber)+'.uzn')
 coords = read_uzn(uznFile)
 
 for file in allFiles:

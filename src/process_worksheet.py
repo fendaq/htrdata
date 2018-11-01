@@ -1,4 +1,6 @@
+import argparse
 import pickle
+import warnings
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,13 +9,22 @@ import pdf2image
 import pytesseract
 import pyzbar.pyzbar as pyzbar
 import os
-from os.path import join
-from src.register_image import register_image
+from os.path import join, basename, dirname
 from src.utils_uzn import coord2crop
+from glob import glob
+import re
+from itertools import filterfalse
+import sys
+sys.path.append(join(os.environ['HOME'], 'imreg'))
+from register_image import register_image
 
-dataroot = 'data'
+parser = argparse.ArgumentParser(description='PyTorch MNIST/CIFAR10 Training')
+parser.add_argument('--redo', action='store_true', help='force re-proceessing of all files')
+args = parser.parse_args()
 
-def process_page(imReg, labels, pageDir):
+crowdRoot = 'crowdsource'
+
+def extract_and_save_crops(imReg, labels, saveDir):
   '''process a single page. extract all handwriting and save to file with filename as label'''
 
   pad = 0
@@ -39,29 +50,52 @@ def process_page(imReg, labels, pageDir):
       # extract the handwritten number
       coord = [ i * xSpacing + xAnchor, j * ySpacing + yAnchor, xWidth, yHeight, 'image' ]
       imCrop, nameCrop = coord2crop(imReg, coord)
-      Image.fromarray(imCrop).save(join(pageDir, labels[(i,j)]+'.jpg'))
+      Image.fromarray(imCrop).save(join(saveDir, labels[(i, j)] + '.jpg'))
+
+def get_seed_from_qr(imReg):
+  '''scan the image for QR code. decode it and return the value (page seed)'''
+  decoded = pyzbar.decode(Image.fromarray(imReg))
+  if not len(decoded)==1:
+    warnings.warn(str(len(decoded))+' QR codes found')
+    return None
+  assert decoded[0].type=='QRCODE'
+  seed = decoded[0].data.decode('utf-8')
+  return seed
+
+def process_pdf(file, crowdRoot, imBlank):
+  '''process a single pdf file'''
+  imOrigAll = pdf2image.convert_from_path(join(file), dpi=300, thread_count=6)
+  for page, imOrig in enumerate(imOrigAll): # loop over all pages in the pdf
+
+    # register image
+    imOrigNp = np.array(imOrig.resize(imBlank.shape[1::-1]))
+    imReg, h = register_image(imOrigNp, imBlank, threshdist=300)
+    if type(imReg) is not np.ndarray:
+      warnings.warn('Image registration failed for '+basename(file)+' page '+str(page))
+      continue
+
+    # decode QR
+    seed = get_seed_from_qr(imReg)
+    if seed==None:
+      warnings.warn('Decode QR seed failed for '+basename(file)+' page '+str(page))
+      continue
+    labels = pickle.load(open(join(crowdRoot, 'generated', 'label-'+str(seed) + '.pkl'), 'rb')) # obtain the labels given the page seed
+
+    # extract and save crops (along with their true labels as the filename) from that page
+    saveDir = join(crowdRoot, 'extracted', str(seed))
+    os.makedirs(saveDir, exist_ok=True)
+    extract_and_save_crops(imReg, labels, saveDir)
 
 # load the blank (template) page
-pages = pdf2image.convert_from_path(join(dataroot,'worksheet.pdf'), dpi=300, thread_count=6)
+pages = pdf2image.convert_from_path(join(crowdRoot, 'worksheet.pdf'), dpi=300, thread_count=6)
 imBlank = np.array(pages[0])
 
 # load the candidate page as image and register it
-imOrig = pdf2image.convert_from_path(join(dataroot, 'generated', '111000-111009.pdf'), dpi=300, thread_count=6)
-# imOrig = Image.open('worksheet.pdf').resize(imBlank.shape[1::-1])
-imOrig = np.array(imOrig[0].resize(imBlank.shape[1::-1]))
-imReg, h = register_image(imOrig, imBlank, threshdist=300)
+scribeDir = join(crowdRoot, 'scribed')
+files = glob(join(scribeDir, '*.pdf'))
+if not args.redo: files = [file for file in files if file.find('extracted-')==-1]
 
-# decode QR code to get page seed
-decoded = pyzbar.decode(Image.fromarray(imReg))
-assert len(decoded)==1
-assert decoded[0].type=='QRCODE'
-seed = decoded[0].data.decode('utf-8')
-
-# obtain the labels given the page seed
-labels = pickle.load(open(join(dataroot, 'generated', str(seed)+'.pkl'), 'rb'))
-
-# process single page
-pageDir = join(dataroot, 'processed', str(seed))
-os.makedirs(pageDir, exist_ok=True)
-process_page(imReg, labels, pageDir)
-
+# loop through all pdfs scribed directory
+for file in files:
+  process_pdf(file, crowdRoot, imBlank)
+  os.rename(file, join(dirname(file), 'extracted-'+basename(file))) # add tag to filename so dont waste time to reprocess this file again

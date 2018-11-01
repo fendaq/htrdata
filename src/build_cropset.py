@@ -6,19 +6,24 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import subprocess
-from utils_uzn import coords2crops, read_uzn
+from utils_uzn import crop_from_file
 
-pagenumber = 1
-registerDir = join('nw_im_reg', str(pagenumber))
-files = glob(join(registerDir, '*.jpg'))
+pagenumber = 2
+formDir = './registered_forms/nw_im_reg'
+uznDir = './uzn'
+patchDir = './cropped_patches'
 
-uznDir = 'uzn'
-uznFile = join(uznDir, 'nw_vertical-'+str(pagenumber)+'.uzn')
+# list of image files
+formDir = join(formDir, str(pagenumber))
+files = glob(join(formDir, '*.jpg'))
 
-for file in allFiles:
+# uzn file
+uznName = 'nw_horizontal-'+str(pagenumber)+'.uzn'
+uznFile = join('uzn', uznName)
 
-  img = cv2.imread(file, cv2.IMREAD_COLOR)
-  crops = coords2crops(img, coords)
-  for imcrop, namecrop in crops:
-    outFile = join(outDir, basename(file[:-4]) +'-' + namecrop + '.jpg')
-    cv2.imwrite(outFile, imcrop)
+# save directory
+saveDir = join(patchDir, uznName[:-4])
+
+# crop all
+crop_from_file(files, uznFile, saveDir)
+

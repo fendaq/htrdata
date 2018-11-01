@@ -29,8 +29,8 @@ def crop_from_file(files, uznFile, saveDir):
   os.makedirs(saveDir, exist_ok=True)
   coords = read_uzn(uznFile)
   for file in files:
-    img = cv2.imread(file, cv2.IMREAD_COLOR)
-    crops = coords2crops(img, coords)
+    im = cv2.imread(file, cv2.IMREAD_COLOR)
+    crops = coords2crops(im, coords)
     for imcrop, namecrop in crops:
       saveFile = join(saveDir, basename(file[:-4]) +'-' + namecrop + '.jpg')
       cv2.imwrite(saveFile, imcrop)

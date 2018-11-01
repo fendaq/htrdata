@@ -14,8 +14,8 @@ nPageToGen = 10
 probComma = .8
 probDollar = .2
 probDecimal = .3
-dataroot = 'data'
-os.makedirs(join(dataroot, 'generated'), exist_ok=True)
+crowdRoot = 'crowdsource'
+os.makedirs(join(crowdRoot, 'generated'), exist_ok=True)
 
 
 def insert_commas(txt):
@@ -85,13 +85,13 @@ def generate_page(imBlank, seed):
       labels[(i,j)] = txt
 
   # np.save(str(seed)+'.npy', labels)
-  pickle.dump(labels, open(join(dataroot, 'generated', str(seed)+'.pkl'), 'wb'))
+  pickle.dump(labels, open(join(crowdRoot, 'generated', 'label-'+str(seed) + '.pkl'), 'wb'))
   im = Image.fromarray(np.uint8(im))
   return im
 
 np.random.seed(seed)
-pagesBlank = pdf2image.convert_from_path(join(dataroot,'worksheet.pdf'), dpi=300, thread_count=6)
+pagesBlank = pdf2image.convert_from_path(join(crowdRoot, 'worksheet.pdf'), dpi=300, thread_count=6)
 imBlank = pagesBlank[0]
 pages = [generate_page(imBlank, seed+i) for i in range(nPageToGen)]
 basename = str(seed)+'-'+str(seed+nPageToGen-1)+'.pdf'
-pages[0].save(join(dataroot, 'generated', basename), format='PDF', resolution=100, save_all=True, append_images=pages[1:])
+pages[0].save(join(crowdRoot, 'generated', basename), format='PDF', resolution=100, save_all=True, append_images=pages[1:])
