@@ -23,3 +23,14 @@ def coords2crops(imRef, coords):
   '''Extract all crops from imRef given list of coord in coords'''
   crops = [coord2crop(imRef, coord) for coord in coords]
   return crops
+
+def crop_from_file(files, uznFile, saveDir):
+  '''crop all patches from list of image files using the coordinates given in uznFile. Save patches in saveDir'''
+  os.makedirs(saveDir, exist_ok=True)
+  coords = read_uzn(uznFile)
+  for file in files:
+    img = cv2.imread(file, cv2.IMREAD_COLOR)
+    crops = coords2crops(img, coords)
+    for imcrop, namecrop in crops:
+      saveFile = join(saveDir, basename(file[:-4]) +'-' + namecrop + '.jpg')
+      cv2.imwrite(saveFile, imcrop)

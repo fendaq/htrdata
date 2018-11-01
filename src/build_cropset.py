@@ -9,14 +9,11 @@ import subprocess
 from utils_uzn import coords2crops, read_uzn
 
 pagenumber = 1
-imgAlignDir = join('nw_im_reg', str(pagenumber))
-uznDir = 'uzn'
-outDir = 'nw_im_crop'
-allFiles = glob(join(imgAlignDir, '*.jpg'))
-os.makedirs(outDir, exist_ok=True)
+registerDir = join('nw_im_reg', str(pagenumber))
+files = glob(join(registerDir, '*.jpg'))
 
-uznFile = join(uznDir, 'nw_numbers-'+str(pagenumber)+'.uzn')
-coords = read_uzn(uznFile)
+uznDir = 'uzn'
+uznFile = join(uznDir, 'nw_vertical-'+str(pagenumber)+'.uzn')
 
 for file in allFiles:
 

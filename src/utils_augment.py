@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from os.path import basename, path
+from os.path import basename, join
 import os
 import sys
 import matplotlib.pyplot as plt
@@ -17,11 +17,11 @@ def put_patch(im, patchPath, centroid):
   return imMod
 
 
-def superimpose_image(imMaster, imSlave, expand=False):
+def superimpose_image(imBase, imArt, expand=False):
   '''
-  Superimpose strokes from imSlave onto imMaster
-  :param imMaster: master image on which imSlave is imposed. whitespace on this image are kept
-  :param imSlave: image to superimpose. whitespace on this image (pixels below threshold) rendered transparent
+  Superimpose artifacts from imArt onto imBase
+  :param imBase: master image on which imArt is imposed. whitespace on this image are kept
+  :param imArt: image to superimpose. whitespace on this image (pixels below threshold) rendered transparent
   :param expand: True if allow resizing of imMaster
   :return: modified image
   '''
