@@ -9,8 +9,8 @@ from os.path import join
 import pyzbar.pyzbar as pyzbar
 import qrcode
 
-seed = 111000
-nPageToGen = 10
+seed = 112000
+nPageToGen = 100
 probComma = .8
 probDollar = .2
 probDecimal = .3
