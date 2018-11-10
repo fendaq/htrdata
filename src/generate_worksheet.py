@@ -14,7 +14,9 @@ nPageToGen = 100
 probComma = .8
 probDollar = .2
 probDecimal = .3
-crowdRoot = 'crowdsource'
+HOME = os.environ['HOME']
+crowdRoot = join(HOME, 'datasets', 'htr_assets', 'crowdsource')
+worksheetRoot = 'worksheets'
 os.makedirs(join(crowdRoot, 'generated'), exist_ok=True)
 
 
